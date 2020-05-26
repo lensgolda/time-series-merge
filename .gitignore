@@ -2,4 +2,5 @@
 .cpcache
 *.iml
 
-data/series.txt
+out
+data/*.txt

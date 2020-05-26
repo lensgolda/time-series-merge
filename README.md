@@ -18,3 +18,13 @@ Optional bonus points can be acquired by implementing the same merge function fo
 - solution implemented in Clojure
 - arbitrary number of input files
 - duplicate dates within single file, sorted in ascending order
+
+### Run
+
+```clojure
+;; runs socket repl on port 50505
+clj -A:socket
+
+;; run program
+clj -m core
+```
