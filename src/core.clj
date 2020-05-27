@@ -1,10 +1,42 @@
 (ns core
   (:require [clojure.java.io :as io]
-            [clojure.string :as s])
+            [clojure.string :as s]
+            [clojure.tools.cli :refer [parse-opts]])
+  (:refer-clojure :exclude [parse-opts])
   (:import (java.time LocalDate)
-           (java.time.format DateTimeFormatter)))
+           (java.time.format DateTimeFormatter))
+  (:gen-class))
 
-(defn -main [])
+
+(declare cli-options date->str str->date str->int process-file process-files process-result)
+
+(defn -main [& args]
+  (let [{:keys [arguments options] :as cli} (parse-opts args cli-options)]
+    (when (:help options)
+      (println (:summary cli))
+      (System/exit 0))
+    (try
+      (if (empty? arguments)
+        (throw (ex-info "No files provided to merge" {:arguments arguments}))
+        (let [encoding (get options :encoding "US-ASCII")]
+          (doseq [file arguments]
+            (when-not (.exists (io/file file))
+              (throw (ex-info "File not exists: " {:file file}))))
+          (with-open [writer (io/writer "data/result" :encoding encoding)]
+            (doseq [record (->> arguments
+                                (apply process-files)
+                                (process-result))]
+              (.write writer (str record "\n"))))))
+      (catch Exception e
+        (prn (.getMessage e) (ex-data e))))))
+
+(def cli-options
+  [["-f" "--file" "File names to read"
+    :multi true
+    :update-fn (fnil conj [])]
+   ["-e" "--encoding ENCODING" "Provide files encoding"
+    :default "US-ASCII"]
+   ["-h" "--help"]])
 
 (defn date->str
   [date]
@@ -37,15 +69,10 @@
   [file-records]
   (->> file-records
        (group-by first)
-       (map (fn [[date v]]
-              (let [ids-grouped (reduce (fn [acc v1]
-                                          (conj acc (second v1)))
+       (map (fn [[date value]]
+              (let [ids-grouped (reduce (fn [acc inner-value]
+                                          (conj acc (second inner-value)))
                                         []
-                                        v)]
+                                        value)]
                 [(date->str date) (apply + ids-grouped)])))
        (into (sorted-set) (comp (map #(s/join ":" %))))))
-
-(with-open [wrtr (io/writer "data/results.txt" :encoding "US-ASCII")]
-  (doseq [record (->> (process-files "data/series_1.txt" "data/series_2.txt")
-                      (process-result))]
-    (.write wrtr (str record "\n"))))

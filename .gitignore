@@ -1,6 +1,8 @@
 .idea
 .cpcache
+.lsp
 *.iml
 
 out
 data/*.txt
+data/result

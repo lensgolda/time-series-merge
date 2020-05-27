@@ -1,3 +1,9 @@
-{:deps {org.clojure/clojure {:mvn/version "1.10.1"}}
+{:deps {org.clojure/clojure {:mvn/version "1.10.1"}
+        org.clojure/tools.cli {:mvn/version "1.0.194"}}
  :paths ["src" "data"]
- :aliases {:socket {:jvm-opts ["-Dclojure.server.repl={:port,50505,:accept,clojure.core.server/repl}"]}}}
+ :aliases {:socket {:jvm-opts ["-Dclojure.server.repl={:port,50505,:accept,clojure.core.server/repl}"]
+                    :extra-paths ["dev"]}
+           :uberjar {:extra-deps {seancorfield/depstar {:mvn/version "1.0.94"}}}
+           :1.8 {:override-deps {org.clojure/clojure {:mvn/version "1.8.0"}}}
+           :1.9 {:override-deps {org.clojure/clojure {:mvn/version "1.9.0"}}}
+           :1.10 {:override-deps {org.clojure/clojure {:mvn/version "1.10.0"}}}}}
