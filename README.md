@@ -23,10 +23,9 @@ Optional bonus points can be acquired by implementing the same merge function fo
 
 Tested with:
 
-- Clojure v. `1.10.1` (Default)
-- Java `1.8` AdoptOpenJDK
+- Clojure v. `1.11.1` (Default)
+- Java `11`
 
-`1.8`, `1.9`, `1.10` versions available to run using aliases (See Run with CLI section below)
 
 Result stores into `./data/result file`
 
@@ -45,7 +44,7 @@ clj -A:socket
 
 help:
 ```shell script
-clj -m core -h
+clj -M -m core -h
 ```
 
 Outputs:
@@ -58,13 +57,9 @@ Outputs:
 Process files with encoding.
 By default runs with 1.10.1 Clojure version:
 ```shell script
-clj -m core -f file_1 file_2 file_3 -e US-ASCII
+clj -M -m core -f data/file_1 data/file_2 data/file_3 -e US-ASCII
 ```
 
-1.8, 1.9, 1.10 versions also available to run using aliases:
-```shell script
-clj -A:1.8 -m core -f file_1 file_2 file_3 -e UTF-8
-```
 
 #### uberjar
 

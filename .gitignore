@@ -1,8 +1,12 @@
 .idea
 .cpcache
 .lsp
+.clj-kondo
+.calva
 *.iml
+.nrepl-port
 
 out
-data/*.txt
+data/*
 data/result
+!data/series.example

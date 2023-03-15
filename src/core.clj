@@ -3,12 +3,44 @@
             [clojure.string :as s]
             [clojure.tools.cli :refer [parse-opts]])
   (:refer-clojure :exclude [parse-opts])
-  (:import (java.time LocalDate)
-           (java.time.format DateTimeFormatter))
   (:gen-class))
 
 
-(declare cli-options date->str str->date str->int process-file process-files process-result)
+(def cli-options
+  [["-f" "--file" "File names to read"
+    :multi true
+    :update-fn (fnil conj [])]
+   ["-e" "--encoding ENCODING" "Provide files encoding"
+    :default "US-ASCII"]
+   ["-h" "--help"]])
+
+(defn str->int
+  [str-val]
+  (Integer/parseInt str-val))
+
+(defn process-file
+  [file-name]
+  (with-open [rdr (io/reader file-name :encoding "US-ASCII")]
+    (into (sorted-map)
+          (comp (map #(s/split % #":"))
+                (map (fn [[date id]]
+                       [date (str->int id)])))
+          (line-seq rdr))))
+
+(defn process-records
+  [file-records]
+  (loop [ts file-records
+         acc (sorted-map)]
+    (if-not (seq ts)
+      acc
+      (recur (rest ts)
+             (reduce (fn [acc [k v]]
+                       (if (contains? acc k)
+                         (update acc k (fnil (partial + v) 0))
+                         (assoc acc k v)))
+                     acc
+                     (first ts))))))
+
 
 (defn -main [& args]
   (let [{:keys [arguments options] :as cli} (parse-opts args cli-options)]
@@ -24,55 +56,9 @@
               (throw (ex-info "File not exists: " {:file file}))))
           (with-open [writer (io/writer "data/result" :encoding encoding)]
             (doseq [record (->> arguments
-                                (apply process-files)
-                                (process-result))]
+                                (map process-file)
+                                (process-records)
+                                (map #(s/join ":" %)))]
               (.write writer (str record "\n"))))))
       (catch Exception e
         (prn (.getMessage e) (ex-data e))))))
-
-(def cli-options
-  [["-f" "--file" "File names to read"
-    :multi true
-    :update-fn (fnil conj [])]
-   ["-e" "--encoding ENCODING" "Provide files encoding"
-    :default "US-ASCII"]
-   ["-h" "--help"]])
-
-(defn date->str
-  [date]
-  (.format date DateTimeFormatter/ISO_LOCAL_DATE))
-
-(defn str->date
-  [str-date]
-  (LocalDate/parse str-date))
-
-(defn str->int
-  [str-val]
-  (Integer/parseInt str-val))
-
-(defn process-file
-  [file-name]
-  (with-open [rdr (io/reader file-name :encoding "US-ASCII")]
-    (into #{}
-          (comp (map #(s/split % #":"))
-                (map (fn [[d id]]
-                       [(str->date d) (str->int id)])))
-          (line-seq rdr))))
-
-(defn process-files
-  [& files]
-  (into #{}
-        (comp (mapcat (fn [file] (process-file file))))
-        files))
-
-(defn process-result
-  [file-records]
-  (->> file-records
-       (group-by first)
-       (map (fn [[date value]]
-              (let [ids-grouped (reduce (fn [acc inner-value]
-                                          (conj acc (second inner-value)))
-                                        []
-                                        value)]
-                [(date->str date) (apply + ids-grouped)])))
-       (into (sorted-set) (comp (map #(s/join ":" %))))))
